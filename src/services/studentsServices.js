@@ -8,6 +8,13 @@ export async function list() {
   return response.data.data;
 }
 
+export async function remove(id) {
+  const url = `${endPoints}/delete/${id}`;
+  console.log(url);
+  const response = await axios.get(url);
+  return response.data.data;
+}
+
 export async function add(name, className, age) {
   const url = `${endPoints}/students`;
   console.log(url);
