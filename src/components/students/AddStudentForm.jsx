@@ -1,35 +1,49 @@
-// src/components/AddStudentForm.jsx (Sử dụng Bootstrap)
 import React, { useState } from "react";
-import { Form, Button, Alert, Row, Col } from "react-bootstrap";
-import * as st from "../services/studentsServices";
+import { Form, Button, Row, Col } from "react-bootstrap";
+import * as st from "../../services/studentsServices";
 
-const AddStudentForm = ({ onStudentAdded }) => {
+const AddStudentForm = ({ onSuccess, onAlert, editingStudent }) => {
   const [name, setName] = useState("");
   const [className, setClassName] = useState("");
   const [age, setAge] = useState("");
-  const [message, setMessage] = useState(null); // Sử dụng null để không hiển thị Alert
-  function clear() {
-    setName("");
-    setClassName("");
-    setAge("");
-  }
+
+  // Khi editingStudent thay đổi, điền giá trị vào form
+  React.useEffect(() => {
+    if (editingStudent) {
+      setName(editingStudent.name);
+      setClassName(editingStudent.class_name);
+      setAge(editingStudent.age);
+    } else {
+      setName("");
+      setClassName("");
+      setAge("");
+    }
+  }, [editingStudent]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(null);
+    onAlert(null);
     try {
-      await st.add(name, className, age);
-      setMessage({ type: "success", text: "Thêm học sinh thành công!" });
-      clear();
-      onStudentAdded();
+      if (editingStudent) {
+        // Gọi API update
+        await st.edit(editingStudent.id, name, className, age);
+        onAlert({ type: "success", text: "Cập nhật học sinh thành công!" });
+        onSuccess("Cập nhật học sinh thành công!");
+      } else {
+        // Gọi API thêm mới
+        await st.add(name, className, age);
+        onAlert({ type: "success", text: "Thêm học sinh thành công!" });
+        onSuccess("Thêm học sinh thành công!");
+      }
     } catch (err) {
       const errorText = err.response?.data?.error || err.message;
-      setMessage({ type: "danger", text: "Lỗi khi thêm: " + errorText });
+      onAlert({ type: "danger", text: "Lỗi khi lưu: " + errorText });
     }
   };
 
   return (
     <div className="mb-4 p-4 border rounded">
-      <h3>➕ Thêm Học sinh Mới</h3>
+      <h3>{editingStudent ? "✏️ Cập nhật" : "➕ Thêm"} học sinh</h3>
       <Form onSubmit={handleSubmit}>
         <Row className="mb-3">
           <Col xs={12} md={4}>
@@ -72,16 +86,9 @@ const AddStudentForm = ({ onStudentAdded }) => {
 
         {/* btn-primary là màu xanh dương */}
         <Button variant="primary" type="submit">
-          Thêm Học sinh
+          {editingStudent ? "Cập nhật học sinh" : "Thêm Học sinh"}
         </Button>
       </Form>
-
-      {/* Hiển thị thông báo (Alert) */}
-      {message && (
-        <Alert variant={message.type} className="mt-3">
-          {message.text}
-        </Alert>
-      )}
     </div>
   );
 };
